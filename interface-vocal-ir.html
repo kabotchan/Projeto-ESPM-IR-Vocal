@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>Declara·IR Fácil — Meus dados e finanças</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
+
+/* Wave animation */
+@keyframes wv{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.35)}}
+.wb{background:#c4c7d1;border-radius:2px;width:3px;transform-origin:bottom;display:inline-block}
+.wb.on{animation:wv 1s ease-in-out infinite;background:#2c9626}
+
+/* Field states */
+.typing{background:#e8f4fd!important;border-color:#0061a3!important;color:#0061a3!important}
+#vp-text-input::placeholder{color:#757880;font-size:13px;font-family:'Inter',sans-serif;}
+.row-ok{background:#f0fff4!important}
+.row-focus{outline:2px solid #0061a3;outline-offset:-2px}
+
+/* Toast */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(60px);background:#333;color:#fff;padding:10px 22px;border-radius:100px;font-size:14px;opacity:0;transition:all .4s;z-index:300;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* Permission bar */
+#perm-bar{display:none;background:#fff3cd;border-bottom:1px solid #ffc107;padding:10px 16px;font-size:13px;color:#856404;position:fixed;top:0;left:0;right:0;z-index:400;align-items:center;gap:10px}
+#perm-bar.show{display:flex}
+#perm-bar button{background:#0061a3;color:#fff;border:none;border-radius:8px;padding:4px 14px;cursor:pointer;font-size:12px}
+
+/* Modal */
+#bv-overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:500;align-items:center;justify-content:center}
+#bv-modal{background:#fff;border-radius:16px;width:490px;padding:28px 28px 24px;box-shadow:0 8px 40px rgba(0,0,0,.22);position:relative;animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+#bv-modal h2{font-size:20px;font-weight:700;color:#1c1b1f;margin-bottom:10px;line-height:1.3}
+#bv-modal .bv-desc{font-size:14px;color:#49454f;line-height:1.6;margin-bottom:20px}
+#bv-modal .bv-close{position:absolute;top:16px;right:16px;width:28px;height:28px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%}
+#bv-modal .bv-close:hover{background:#f0f0f0}
+#bv-modal .bv-actions{display:flex;justify-content:flex-end}
+#bv-modal .btn-primary{background:#0061a3;border:none;border-radius:100px;padding:10px 32px;font-size:14px;font-weight:600;color:#fff;cursor:pointer}
+#bv-modal .btn-primary:hover{background:#004d8a}
+
+/* VP messages */
+#vp-msgs{position:absolute;top:170px;left:0;right:0;bottom:134px;overflow-y:auto;padding:4px 13px 8px;display:flex;flex-direction:column;gap:4px}
+#vp-msgs::-webkit-scrollbar{width:4px}
+#vp-msgs::-webkit-scrollbar-thumb{background:#c4c7d1;border-radius:4px}
+
+/* VP chips */
+#vp-chips{display:none;position:absolute;bottom:134px;left:13px;right:13px;padding-bottom:6px;background:linear-gradient(transparent,#ebf0fa 30%);flex-direction:column;align-items:center;gap:4px}
+
+/* Input */
+.f-input{border:1px solid #f0f0f0;border-radius:8px;background:#fff;padding:9px 11px 8px;font-size:14px;color:#1e1e1e;font-family:'Inter',sans-serif;width:100%;outline:none;text-transform:uppercase}
+.f-input:focus{border-color:#0061a3}
+</style>
+</head>
+<body>
+
+<!-- Permission bar -->
+<div id="perm-bar">
+  ⚠️ Microfone bloqueado — o assistente de voz precisa do microfone para funcionar.
+  <button onclick="navigator.mediaDevices.getUserMedia({audio:true}).then(()=>location.reload()).catch(()=>{})">Permitir microfone</button>
+</div>
+
+<!-- Welcome modal -->
+<div id="bv-overlay">
+  <div id="bv-modal">
+    <button class="bv-close" onclick="closeBvModal()" aria-label="Fechar">
+      <svg width="20" height="20" viewBox="0 0 20 20"><path d="M15 5L5 15M5 5l10 10" stroke="#49454f" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <h2>Bem-vindo ao E-vocal assist</h2>
+    <p class="bv-desc">O E-vocal assist usa inteligência artificial para te guiar pelo preenchimento da sua declaração. Ative o assistente para começar.</p>
+    <img src="images/evocal-tutorial.png" style="display:block;width:100%;border-radius:8px;margin-bottom:20px;" alt="E-vocal assist tutorial">
+    <div class="bv-actions">
+      <button class="btn-primary" onclick="closeBvModal()">Entendi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ CANVAS 1440px ══ -->
+<div style="position:relative;width:1440px;min-height:1240px;background:#f7f7f7;">
+
+  <!-- ── TopAppBar ── -->
+  <div style="position:absolute;top:0;left:1px;width:1439px;height:81px;background:#f5f9fc;border:1px solid #c4c7d1;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;">
+    <!-- Logo -->
+    <img src="https://www.figma.com/api/mcp/asset/12bbd161-0f43-422c-8739-06fab4ad3c68" style="position:absolute;left:18px;top:12px;width:64px;height:57px;object-fit:contain;" alt="Logo">
+    <p style="position:absolute;left:100px;top:20px;font-size:32px;font-weight:700;color:#003772;white-space:nowrap;line-height:1;">Declara·IR <span style="font-weight:300;">Fácil</span></p>
+    <!-- Toolbar icons -->
+    <img src="https://www.figma.com/api/mcp/asset/d9f1fa9c-8df2-4299-ac2e-13602100981f" style="position:absolute;left:1083px;top:27px;width:24px;height:24px;" alt="folder-open" title="Abrir">
+    <img src="https://www.figma.com/api/mcp/asset/2a50548a-0ac5-432f-9dfe-094f9195816d" style="position:absolute;left:1134px;top:29px;width:24px;height:24px;" alt="trash-can" title="Excluir">
+    <img src="https://www.figma.com/api/mcp/asset/f0434d81-de3e-4ce1-b3e7-4cf5d6bfc30c" style="position:absolute;left:1186px;top:30px;width:24px;height:24px;" alt="salvar" title="Salvar">
+    <img src="https://www.figma.com/api/mcp/asset/51ba20ed-567d-4ee4-942e-e6d0f55929c7" style="position:absolute;left:1237px;top:30px;width:24px;height:24px;" alt="file-check" title="Verificar">
+    <img src="https://www.figma.com/api/mcp/asset/442b7171-bf0c-421f-870d-33dc5df258ab" style="position:absolute;left:1287px;top:29px;width:24px;height:24px;" alt="file-send" title="Enviar">
+    <img src="https://www.figma.com/api/mcp/asset/ce76a410-6fa6-4778-9e82-c0c6682431c8" style="position:absolute;left:1339px;top:30px;width:24px;height:24px;" alt="help" title="Ajuda">
+    <img src="https://www.figma.com/api/mcp/asset/b98f7106-92b7-45df-b7b5-b5f955e28ecc" style="position:absolute;left:1390px;top:30px;width:24px;height:24px;" alt="fechar" title="Fechar">
+  </div>
+
+  <!-- ── UserCard ── -->
+  <div style="position:absolute;top:104px;left:20px;width:334px;height:66px;background:#fff;border:1px solid #0084b3;border-radius:8px;">
+    <!-- Avatar -->
+    <img src="https://www.figma.com/api/mcp/asset/789f0c07-9566-4d5d-a661-1d9a9d75c5fc" style="position:absolute;left:7.85px;top:14.35px;width:40px;height:36px;object-fit:contain;" alt="avatar">
+    <!-- Divider -->
+    <div style="position:absolute;left:58px;top:13.2px;width:1px;height:39.6px;background:#0061a3;"></div>
+    <!-- Trophy -->
+    <img src="https://www.figma.com/api/mcp/asset/fa7693a8-a324-48b7-adec-f0e04440fa5b" style="position:absolute;left:71px;top:19.23px;width:24px;height:24px;object-fit:contain;" alt="trophy">
+    <!-- Name -->
+    <p style="position:absolute;left:100px;top:18px;font-size:12px;font-weight:600;color:#0084b3;text-transform:uppercase;white-space:nowrap;letter-spacing:-.2px;">Joseph Jason N. Momoa</p>
+    <!-- CPF -->
+    <p style="position:absolute;left:100px;top:36px;font-size:11px;font-weight:500;color:#0084b3;">CPF: 999.999.999-99</p>
+    <!-- gov.br -->
+    <p style="position:absolute;right:14px;top:36px;font-size:10px;font-weight:600;color:#cc8f00;">gov.br</p>
+  </div>
+
+  <!-- ── InfoCard ── -->
+  <div style="position:absolute;top:186px;left:19px;width:335px;height:48px;background:#fff;border:1px solid #fc0;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;">
+    <p style="position:absolute;left:21px;top:7px;font-size:14px;font-weight:600;color:#1c1b1f;white-space:nowrap;">1.240.832</p>
+    <p style="position:absolute;left:21px;top:26px;font-size:9px;font-weight:500;color:#49454f;width:112px;">declarantes nesta etapa</p>
+    <div style="position:absolute;left:139px;top:7px;width:1px;height:32px;background:#cac4d0;"></div>
+    <p style="position:absolute;left:154px;top:7px;font-size:14px;font-weight:600;color:#1c1b1f;">358</p>
+    <p style="position:absolute;left:149px;top:26px;font-size:9px;font-weight:500;color:#49454f;width:84px;">dias para o prazo</p>
+    <div style="position:absolute;left:235px;top:7px;width:1px;height:32px;background:#cac4d0;"></div>
+    <p style="position:absolute;left:251px;top:26px;font-size:9px;font-weight:500;color:#1e6b1a;white-space:nowrap;">Se enviar hoje</p>
+    <p style="position:absolute;left:250px;top:8px;font-size:14px;font-weight:600;color:#2c9626;white-space:nowrap;">★  1º lote</p>
+  </div>
+
+  <!-- ── NavRail ── -->
+  <div style="position:absolute;top:249px;left:20px;width:335px;height:687px;background:#f5f9fc;border:1px solid #c4c7d1;border-radius:8px;overflow:hidden;">
+    <!-- Section 1 header (expanded, bg gray) -->
+    <div style="position:absolute;top:-1px;left:0;width:334px;height:37px;background:#cac4d0;border-bottom:1px solid #c4c7d1;border-radius:8px 8px 0 0;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">1</span>
+      </div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Meus dados e finanças</p>
+      <!-- Chevron down (expanded) -->
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+
+    <!-- Gray sub-header bar -->
+    <div style="position:absolute;top:38px;left:0;width:335px;height:25px;background:#e0e0e0;"></div>
+
+    <!-- Sub-items list -->
+    <div style="position:absolute;top:40px;left:34px;width:283px;">
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/939f7ef7-9b01-44c0-9bd8-e2a3e881ee98" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:2px;"><span style="font-size:12px;color:#000;line-height:24px;">Meus dados pessoais</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/589837f1-428f-49f9-9685-1e1769b16537" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:26px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem você sustenta (filhos, cônjuge…)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/c28cd5bb-0d69-4885-b51f-e6c080a5db8e" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:50px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem recebe pensão alimentícia sua</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/0eaa9fed-348d-4324-898a-327e8acb1295" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:74px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário e pagamentos recebidos de empresas</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/0a538cf0-8412-449e-8f34-9c88d23ba8d8" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:98px;"><span style="font-size:12px;color:#000;line-height:24px;">Outros tipos de pagamentos recebidos</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/151babc2-c7bd-447f-b848-c209dfacb54f" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:122px;"><span style="font-size:12px;color:#000;line-height:24px;">Dinheiro que você recebeu e não paga imposto</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/1843fbca-864b-45c9-afe6-c354687ac0cb" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:146px;"><span style="font-size:12px;color:#000;line-height:24px;">Ganhos com imposto descontado no pagamento</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/c41dba7d-ad60-477c-8fe6-216aa11077d5" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:170px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário em disputa judicial</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/76c01c24-f2ee-48e1-97ee-e40f88f7a3be" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:194px;"><span style="font-size:12px;color:#000;line-height:24px;">Valores atrasados recebidos de uma vez</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/2e0ce08b-844d-41f1-9957-5c629831aad6" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:218px;"><span style="font-size:12px;color:#000;line-height:24px;">Imposto já descontado do seu salário</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/ed590366-7d4f-4dbf-bc0e-1199d501434e" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:242px;"><span style="font-size:12px;color:#000;line-height:24px;">Gastos que podem reduzir imposto (saúde, etc...)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/3abf50d2-2651-4e05-a665-cacec2018423" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:266px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações feitas</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/440b8dad-085e-41de-82c5-78ea744972ab" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:290px;"><span style="font-size:12px;color:#000;line-height:24px;">Doar parte do seu imposto agora</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/bc67be52-ea4d-4e41-8d72-a561de960d80" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:314px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você tem (imóvel, carro, investimentos…)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/dc70abfa-acba-4403-9bce-ad98b9c56373" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:338px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você deve para a Receita</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/49a6da6b-6ea8-4d84-9db9-37c5ff192058" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:362px;"><span style="font-size:12px;color:#000;line-height:24px;">Declaração de pessoa que faleceu</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/6ab2babd-439f-4c8f-bb79-d9734be7db53" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:386px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações eleitorais</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/d1e547be-53de-46ad-a805-6267bf81d253" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:410px;"><span style="font-size:12px;color:#000;line-height:24px;">Trazer dados de outro sistema</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/d432828d-7182-45b3-a9c9-6fb473181e1b" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:434px;"><span style="font-size:12px;color:#000;line-height:24px;">Checar se está tudo certo</span></div>
+    </div>
+
+    <!-- Section 2: Trabalho no campo -->
+    <div style="position:absolute;top:501px;left:0;width:334px;height:37px;background:#fff;border-bottom:1px solid #c4c7d1;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">2</span></div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Trabalho no campo</p>
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <!-- Section 3: Lucros recebidos -->
+    <div style="position:absolute;top:538px;left:0;width:334px;height:37px;background:#fff;border-bottom:1px solid #c4c7d1;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">3</span></div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Lucros recebidos</p>
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <!-- Section 4: Resultado final -->
+    <div style="position:absolute;top:575px;left:0;width:334px;height:37px;background:#fff;border-bottom:1px solid #c4c7d1;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">4</span></div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Resultado final</p>
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <!-- Section 5: Usar conta do governo -->
+    <div style="position:absolute;top:612px;left:0;width:334px;height:37px;background:#fff;border-bottom:1px solid #c4c7d1;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">5</span></div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Usar conta do governo</p>
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+
+    <!-- Section 6: Enviar sua declaração -->
+    <div style="position:absolute;top:649px;left:0;width:334px;height:37px;background:#fff;border-bottom:1px solid #c4c7d1;">
+      <div style="position:absolute;left:8px;top:10px;width:18px;height:18px;background:#454752;border-radius:12px;display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:#fff;font-weight:400;line-height:1;">6</span></div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#000;white-space:nowrap;">Enviar sua declaração</p>
+      <div style="position:absolute;right:6px;top:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="#49454f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </div>
+
+  <!-- ── Main content area ── -->
+  <div style="position:absolute;top:93px;left:354px;width:827px;height:1047px;background:#f7f7f7;overflow:hidden;">
+
+    <!-- ETAPA 1/6 badge -->
+    <div style="position:absolute;left:11px;top:-1px;width:86px;height:88px;">
+      <svg width="86" height="88" viewBox="0 0 86 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M29.5964 64.4282V58.61H33.5169V59.6242H30.8265V61.0106H33.3152V62.0248H30.8265V63.414H33.5282V64.4282H29.5964ZM34.2733 59.6242V58.61H39.0517V59.6242H37.2704V64.4282H36.0545V59.6242H34.2733ZM40.1305 64.4282H38.8123L40.8208 58.61H42.4061L44.4118 64.4282H43.0936L41.6362 59.9396H41.5907L40.1305 64.4282ZM40.0481 62.1413H43.1618V63.1015H40.0481V62.1413ZM45.112 64.4282V58.61H47.4075C47.8488 58.61 48.2247 58.6943 48.5353 58.8629C48.8459 59.0295 49.0827 59.2616 49.2456 59.5589C49.4103 59.8544 49.4927 60.1953 49.4927 60.5816C49.4927 60.968 49.4094 61.3089 49.2427 61.6044C49.0761 61.8998 48.8346 62.1299 48.5183 62.2947C48.2039 62.4595 47.8232 62.5419 47.3762 62.5419H45.9132V61.5561H47.1774C47.4141 61.5561 47.6092 61.5153 47.7626 61.4339C47.9179 61.3506 48.0334 61.236 48.1092 61.0902C48.1869 60.9424 48.2257 60.7729 48.2257 60.5816C48.2257 60.3884 48.1869 60.2199 48.1092 60.0759C48.0334 59.9301 47.9179 59.8174 47.7626 59.7379C47.6073 59.6564 47.4103 59.6157 47.1717 59.6157H46.3422V64.4282H45.112ZM50.6227 64.4282H49.3045L51.313 58.61H52.8983L54.9039 64.4282H53.5858L52.1284 59.9396H52.0829L50.6227 64.4282ZM50.5403 62.1413H53.6539V63.1015H50.5403V62.1413Z" fill="#0061A3"/>
+<path d="M45.9882 28.7273V52H41.0677V33.3977H40.9314L35.6018 36.7386V32.375L41.3632 28.7273H45.9882Z" fill="#0061A3"/>
+<path d="M70.2333 59.3331C72.9594 54.4443 74.3855 48.9038 74.3682 43.2686C74.3509 37.6335 72.8908 32.1023 70.1346 27.2313L65.8329 29.8039C68.1497 33.8985 69.377 38.5479 69.3916 43.2848C69.4062 48.0217 68.2074 52.679 65.9158 56.7885L70.2333 59.3331Z" fill="#D9D9D9"/>
+<path d="M70.046 27.2164C67.2761 22.3186 63.3006 18.2568 58.5194 15.4396C53.7382 12.6223 48.3198 11.1489 42.809 11.1674L42.8253 16.3112C47.4577 16.2957 52.0124 17.5343 56.0314 19.9024C60.0504 22.2706 63.3922 25.6849 65.7206 29.8019L70.046 27.2164Z" fill="#0061A3"/>
+<path d="M42.8156 11.1674C37.3048 11.1847 31.8956 12.6933 27.1318 15.5416C22.368 18.3898 18.4176 22.4773 15.6778 27.393L20.019 29.9504C22.3221 25.8183 25.6428 22.3824 29.6472 19.9881C33.6516 17.5939 38.1986 16.3258 42.8309 16.3112L42.8156 11.1674Z" fill="#D9D9D9"/>
+<path d="M15.815 27.2602C13.0889 32.149 11.6628 37.6895 11.6801 43.3246C11.6974 48.9598 13.1575 54.491 15.9137 59.3619L20.2154 56.7893C17.8986 52.6948 16.6712 48.0454 16.6567 43.3085C16.6421 38.5716 17.8409 33.9143 20.1325 29.8048L15.815 27.2602Z" fill="#D9D9D9"/>
+<path d="M15.9554 59.3359C18.7254 64.2337 22.7009 68.2954 27.4821 71.1127C32.2633 73.93 37.6817 75.4034 43.1925 75.3849L43.1761 70.2411C38.5438 70.2566 33.9891 69.018 29.9701 66.6499C25.951 64.2817 22.6093 60.8674 20.2809 56.7503L15.9554 59.3359Z" fill="#D9D9D9"/>
+<path d="M43.1859 75.385C48.6967 75.3677 54.106 73.8591 58.8698 71.0108C63.6336 68.1626 67.584 64.0751 70.3238 59.1594L65.9826 56.602C63.6795 60.7341 60.3588 64.17 56.3544 66.5642C52.35 68.9584 47.803 70.2266 43.1707 70.2411L43.1859 75.385Z" fill="#D9D9D9"/>
+<path d="M55.2235 35.4316C54.5615 35.4316 53.9891 35.291 53.5061 35.0097C53.026 34.7256 52.6553 34.3308 52.3939 33.8251C52.1326 33.3166 52.0019 32.7271 52.0019 32.0566C52.0019 31.3805 52.1326 30.7896 52.3939 30.2839C52.6553 29.7754 53.026 29.3805 53.5061 29.0992C53.9891 28.8151 54.5615 28.6731 55.2235 28.6731C55.8854 28.6731 56.4564 28.8151 56.9365 29.0992C57.4195 29.3805 57.7917 29.7754 58.053 30.2839C58.3144 30.7896 58.4451 31.3805 58.4451 32.0566C58.4451 32.7271 58.3144 33.3166 58.053 33.8251C57.7917 34.3308 57.4195 34.7256 56.9365 35.0097C56.4564 35.291 55.8854 35.4316 55.2235 35.4316ZM55.232 34.0254C55.5331 34.0254 55.7846 33.9401 55.9863 33.7697C56.188 33.5964 56.34 33.3606 56.4422 33.0623C56.5473 32.764 56.5999 32.4245 56.5999 32.0438C56.5999 31.6631 56.5473 31.3237 56.4422 31.0254C56.34 30.7271 56.188 30.4913 55.9863 30.318C55.7846 30.1447 55.5331 30.058 55.232 30.058C54.928 30.058 54.6723 30.1447 54.465 30.318C54.2604 30.4913 54.1056 30.7271 54.0005 31.0254C53.8982 31.3237 53.8471 31.6631 53.8471 32.0438C53.8471 32.4245 53.8982 32.764 54.0005 33.0623C54.1056 33.3606 54.2604 33.5964 54.465 33.7697C54.6723 33.9401 54.928 34.0254 55.232 34.0254Z" fill="#0061A3"/>
+<path d="M57.0317 41.8637L54.2192 52.3126H52.6553L55.4678 41.8637H57.0317ZM61.2387 51.1194C60.7898 51.1165 60.3566 51.0413 59.939 50.8935C59.5242 50.7458 59.1521 50.5057 58.8225 50.1734C58.493 49.841 58.2316 49.4006 58.0384 48.8523C57.8481 48.304 57.7529 47.6307 57.7529 46.8324C57.7557 46.0995 57.8396 45.4447 58.0043 44.868C58.1719 44.2884 58.4106 43.7969 58.7202 43.3935C59.0327 42.9901 59.4063 42.6833 59.841 42.4731C60.2756 42.26 60.7629 42.1535 61.3026 42.1535C61.885 42.1535 62.3992 42.2671 62.8452 42.4944C63.2913 42.7188 63.6492 43.0242 63.9191 43.4106C64.1918 43.7969 64.3566 44.2302 64.4134 44.7103H62.5938C62.5228 44.4063 62.3736 44.1677 62.1464 43.9944C61.9191 43.8211 61.6379 43.7344 61.3026 43.7344C60.7344 43.7344 60.3026 43.9816 60.0072 44.4759C59.7146 44.9702 59.5654 45.6421 59.5597 46.4915H59.6194C59.7501 46.233 59.9262 46.0128 60.1478 45.831C60.3722 45.6464 60.6265 45.5057 60.9106 45.4092C61.1975 45.3097 61.5001 45.26 61.8182 45.26C62.3353 45.26 62.7955 45.3822 63.1989 45.6265C63.6023 45.868 63.9205 46.2003 64.1535 46.6236C64.3864 47.0469 64.5029 47.5313 64.5029 48.0768C64.5029 48.6677 64.3651 49.1932 64.0896 49.6535C63.8168 50.1137 63.4347 50.4745 62.9432 50.7359C62.4546 50.9944 61.8864 51.1222 61.2387 51.1194ZM61.2302 49.6705C61.5143 49.6705 61.7685 49.6023 61.993 49.466C62.2174 49.3296 62.3935 49.1449 62.5214 48.912C62.6492 48.679 62.7131 48.4177 62.7131 48.1279C62.7131 47.8381 62.6492 47.5782 62.5214 47.3481C62.3964 47.118 62.2231 46.9347 62.0015 46.7984C61.7799 46.662 61.5271 46.5938 61.243 46.5938C61.0299 46.5938 60.8325 46.6336 60.6506 46.7131C60.4717 46.7927 60.314 46.9035 60.1776 47.0455C60.0441 47.1876 59.939 47.3523 59.8623 47.5398C59.7856 47.7245 59.7472 47.9219 59.7472 48.1322C59.7472 48.4134 59.8111 48.6705 59.939 48.9035C60.0697 49.1364 60.2458 49.3225 60.4674 49.4617C60.6918 49.6009 60.9461 49.6705 61.2302 49.6705Z" fill="#0061A3"/>
+</svg>
+    </div>
+
+    <!-- Legend -->
+    <div style="position:absolute;left:734px;top:16px;">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
+        <img src="https://www.figma.com/api/mcp/asset/7c04c5ea-ef36-4c27-a56d-75b43b6b7e07" style="width:12px;height:12px;" alt="">
+        <span style="font-size:8px;color:#000;font-weight:400;">ETAPA ATUAL</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
+        <img src="https://www.figma.com/api/mcp/asset/3488587f-27b2-4aef-9d1b-0418c110bd0f" style="width:12px;height:12px;" alt="">
+        <span style="font-size:8px;color:#000;font-weight:400;">COM PROBLEMAS</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <img src="https://www.figma.com/api/mcp/asset/96fe07f0-5c7c-49d3-aa1c-804ad38b2c25" style="width:12px;height:12px;" alt="">
+        <span style="font-size:8px;color:#000;font-weight:400;">CONCLUÍDA</span>
+      </div>
+    </div>
+
+    <!-- Title: Meus dados e finanças -->
+    <p style="position:absolute;left:106px;top:11px;font-size:26px;font-weight:700;color:#1c1c26;width:403px;">Meus dados e finanças</p>
+
+    <!-- Chevron + subtitle -->
+    <div style="position:absolute;left:100px;top:52px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+      <!-- <img src="https://www.figma.com/api/mcp/asset/f1241a38-10a4-49bd-bfde-e94eadd1742e" style="width:24px;height:24px;" alt="chevron"> -->
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8.59 16.58L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.58Z" fill="black"/>
+      </svg>
+    </div>
+    <p style="position:absolute;left:124px;top:54px;font-size:16px;font-weight:400;color:#454752;">Meus dados pessoais</p>
+
+    <!-- StreakCard -->
+    <div style="position:absolute;top:94px;left:22px;width:805px;height:48px;background:#fff;border:1px solid #2c9626;border-radius:8px;overflow:hidden;">
+      <img src="https://www.figma.com/api/mcp/asset/16aaaad0-3c3b-4d49-a0c1-8392ea88b017" style="position:absolute;left:14px;top:13px;width:20px;height:20px;" alt="estrela">
+      <p style="position:absolute;left:41px;top:15px;font-size:13px;font-weight:600;color:#2c9626;width:748px;">3 dias seguidos! Você está no top 15% dos declarantes desta semana. Continue assim!</p>
+    </div>
+
+    <!-- Status chips -->
+    <div style="position:absolute;top:156px;left:22px;width:163px;height:32px;background:#f3faff;border:1px solid #000;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
+      <img src="https://www.figma.com/api/mcp/asset/f529d345-2ca9-465d-ac63-215122d11603" style="position:absolute;left:4px;width:20px;height:20px;" alt="">
+      <span style="position:absolute;left:30px;font-size:12px;color:#454752;white-space:nowrap;">29 dados importados</span>
+    </div>
+    <div style="position:absolute;top:156px;left:237px;width:117px;height:32px;background:#f3faff;border:1px solid #e5a000;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
+      <div style="position:absolute;left:6px;width:17px;height:17px;background:#e5a000;border-radius:50%;display:flex;align-items:center;justify-content:center;top:7px;"><span style="font-size:10px;color:#fff;font-weight:700;">!</span></div>
+      <span style="position:absolute;left:28px;font-size:12px;color:#cc8f00;white-space:nowrap;">3 para revisar</span>
+    </div>
+    <div style="position:absolute;top:156px;left:404px;width:97px;height:32px;background:#f3faff;border:1px solid #ba1a1a;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
+      <img src="https://www.figma.com/api/mcp/asset/f1825b79-18b7-4a0c-a3f7-a31c15d6f7a5" style="position:absolute;left:6px;width:17px;height:17px;" alt="">
+      <span style="position:absolute;left:27px;font-size:12px;color:#ba1a1a;white-space:nowrap;">1 ausente</span>
+    </div>
+
+    <!-- DataList -->
+    <div style="position:absolute;top:202px;left:22px;width:805px;height:845px;background:#f5f9fc;border:1px solid #c4c7d1;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;">
+
+      <!-- Section: Dados pessoais -->
+      <p style="position:absolute;left:43px;top:20px;font-size:20px;font-weight:400;color:#1e1e1e;width:403px;">Dados pessoais</p>
+
+      <!-- Row 1: Nome completo + Data nascimento -->
+      <div style="position:absolute;top:64px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">Nome completo</p>
+        <input id="f-nome" class="f-input" value="Joseph Jason Namakaeha Momoa" style="position:absolute;left:44px;top:24px;width:289px;height:30px;font-size:14px;text-transform:uppercase;" />
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;">Data de nascimento</p>
+        <div style="position:absolute;left:382px;top:24px;width:100px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">01/09/1979</span></div>
+      </div>
+
+      <!-- Row 2: CPF + Raça/cor -->
+      <div style="position:absolute;top:129px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">CPF</p>
+        <div style="position:absolute;left:44px;top:24px;width:172px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">999.999.999-99</span></div>
+        <p style="position:absolute;left:384px;top:10px;font-size:10px;color:#757880;">Raça/cor</p>
+        <div style="position:absolute;left:384px;top:26px;width:184px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;">Selecione</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+      </div>
+
+      <!-- Row 3: Possui companheiro + CPF companheiro -->
+      <div style="position:absolute;top:194px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">Possui companheiro(a)?</p>
+        <!-- Switch ON -->
+        <div style="position:absolute;left:44px;top:29px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <div style="width:52px;height:32px;border-radius:16px;background:#0061a3;position:relative;flex-shrink:0;">
+            <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;right:4px;top:4px;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div>
+          </div>
+          <span style="font-size:14px;color:#1e1e1e;">Sim</span>
+        </div>
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:136px;">CPF do companheiro(a)</p>
+        <div style="position:absolute;left:382px;top:24px;width:172px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">999.999.999-99</span></div>
+      </div>
+
+      <!-- Row 4: Voltou a morar -->
+      <div style="position:absolute;top:259px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">Voltou a morar no Brasil em 2025?</p>
+        <!-- Switch OFF -->
+        <div style="position:absolute;left:44px;top:29px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <div style="width:52px;height:32px;border-radius:16px;background:transparent;border:2px solid #79747e;position:relative;flex-shrink:0;">
+            <div style="position:absolute;width:16px;height:16px;border-radius:50%;background:#79747e;left:6px;top:6px;"></div>
+          </div>
+          <span style="font-size:14px;color:#1e1e1e;">Não</span>
+        </div>
+      </div>
+
+      <!-- Row 5: DDD + Celular + Email -->
+      <div id="row-phone" style="position:absolute;top:324px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">DDD</p>
+        <input id="f-ddd" class="f-input" value="99" style="position:absolute;left:44px;top:24px;width:40px;height:30px;font-size:14px;" />
+        <p style="position:absolute;left:90px;top:8px;font-size:10px;color:#757880;">Telefone celular</p>
+        <input id="f-cel" class="f-input" value="99999-9999" style="position:absolute;left:90px;top:24px;width:124px;height:30px;font-size:14px;" />
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:136px;">E-mail</p>
+        <div style="position:absolute;left:382px;top:24px;width:269px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;text-transform:uppercase;">LOREMIPSUM@EMAIL.COM.BR</span></div>
+      </div>
+
+      <!-- Section: Endereço -->
+      <p style="position:absolute;left:43px;top:410px;font-size:20px;font-weight:400;color:#1e1e1e;width:403px;">Endereço</p>
+
+      <!-- Row 6: Moro atualmente + CEP + Consultar -->
+      <div style="position:absolute;top:454px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">Moro atualmente</p>
+        <!-- Radio Brasil (selected) -->
+        <div style="position:absolute;left:30px;top:33px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <div style="width:20px;height:20px;border-radius:50%;border:2px solid #0061a3;position:relative;flex-shrink:0;"><div style="position:absolute;width:10px;height:10px;border-radius:50%;background:#0061a3;top:3px;left:3px;"></div></div>
+          <span style="font-size:14px;color:#1e1e1e;">Brasil</span>
+        </div>
+        <!-- Radio Exterior (not selected) -->
+        <div style="position:absolute;left:130px;top:33px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <div style="width:20px;height:20px;border-radius:50%;border:2px solid #79747e;flex-shrink:0;"></div>
+          <span style="font-size:14px;color:#1e1e1e;">Exterior</span>
+        </div>
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;">CEP</p>
+        <div style="position:absolute;left:382px;top:24px;width:100px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">99999-999</span></div>
+        <!-- Consultar button -->
+        <div style="position:absolute;left:494px;top:24px;width:103px;height:30px;background:rgba(0,97,163,.5);border-radius:100px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <span style="font-size:14px;font-weight:600;color:#fff;">Consultar</span>
+        </div>
+      </div>
+
+      <!-- Row 7: Tipo + Nome da rua -->
+      <div style="position:absolute;top:519px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;">Tipo</p>
+        <div style="position:absolute;left:41px;top:24px;width:184px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;">Rua</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+        <p style="position:absolute;left:384px;top:8px;font-size:10px;color:#757880;">Nome da rua</p>
+        <div style="position:absolute;left:384px;top:24px;width:372px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;text-transform:uppercase;">LOREM IPSUM DOLOR SIT AMET</span></div>
+      </div>
+
+      <!-- Row 8: Número + Complemento + Bairro -->
+      <div style="position:absolute;top:584px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:44px;top:8px;font-size:10px;color:#757880;">Número</p>
+        <div style="position:absolute;left:44px;top:24px;width:72px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">9999</span></div>
+        <p style="position:absolute;left:130px;top:8px;font-size:10px;color:#757880;">Complemento</p>
+        <div style="position:absolute;left:130px;top:24px;width:67px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;">99A</span></div>
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:136px;">Bairro</p>
+        <div style="position:absolute;left:382px;top:24px;width:372px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;text-transform:uppercase;">LOREM IPSUM DOLOR SIT AMET</span></div>
+      </div>
+
+      <!-- Row 9: UF + Município -->
+      <div style="position:absolute;top:649px;left:-1px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;">UF</p>
+        <div style="position:absolute;left:41px;top:24px;width:77px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;">AA</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:67px;">Município</p>
+        <div style="position:absolute;left:382px;top:24px;width:369px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">LOREM IPSUM DOLOR SIT AMET</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+      </div>
+
+      <!-- Section: Meu trabalho -->
+      <p style="position:absolute;left:43px;top:735px;font-size:20px;font-weight:400;color:#1e1e1e;width:403px;">Meu trabalho</p>
+
+      <!-- Row 10: Trabalho para + Tipo de trabalho -->
+      <div style="position:absolute;top:779px;left:-2px;width:805px;height:65px;background:#fff;border-bottom:1px solid #d9d9d9;overflow:hidden;">
+        <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;width:132px;">Trabalho para</p>
+        <div style="position:absolute;left:41px;top:24px;width:292px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">FREE LANCER</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+        <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:122px;">Tipo de trabalho</p>
+        <div style="position:absolute;left:382px;top:24px;width:405px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
+          <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">ATOR</span>
+          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+        </div>
+      </div>
+    </div><!-- /DataList -->
+
+  </div><!-- /Main -->
+
+  <!-- Check-circle icons (section verified) -->
+  <div style="position:absolute;left:393px;top:320px;width:15px;height:15px;overflow:hidden;">
+    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+  </div>
+  <div style="position:absolute;left:393px;top:710px;width:15px;height:15px;overflow:hidden;">
+    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+  </div>
+  <div style="position:absolute;left:393px;top:1035px;width:15px;height:15px;overflow:hidden;">
+    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+  </div>
+
+  <!-- ── VoicePanel ── -->
+  <div style="position:absolute;top:187px;left:1202px;width:216px;height:800px;background:#f5f9fc;border:1px solid #c4c7d1;border-radius:8px;overflow:hidden;">
+    <!-- Left border accent -->
+    <div style="position:absolute;top:-1px;left:-1px;width:1px;height:784px;background:#c4c7d1;"></div>
+
+    <!-- Header -->
+    <div style="position:absolute;top:-1px;left:0;width:215px;height:109px;background:#0061a3;overflow:hidden;">
+      <p style="position:absolute;left:14px;top:20px;font-size:20px;font-weight:600;color:#fff;white-space:nowrap;">E-vocal assist</p>
+      <!-- IA badge -->
+      <div style="position:absolute;left:165px;top:25px;width:31px;height:16px;background:#ffe57a;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:10px;font-weight:700;color:#0061a3;text-transform:uppercase;letter-spacing:.5px;">IA</span>
+      </div>
+      <!-- Toggle -->
+      <div onclick="toggleVoice()" style="position:absolute;left:14px;top:59px;display:flex;align-items:center;gap:8px;cursor:pointer;height:30px;">
+        <!-- OFF toggle -->
+        <div id="vp-toggle-off" style="width:49px;height:30px;border-radius:15px;background:#e0e0e0;position:relative;flex-shrink:0;">
+          <div style="position:absolute;width:16px;height:16px;border-radius:50%;background:#79747e;left:8px;top:7px;"></div>
+        </div>
+        <span id="vp-label-off" style="font-size:12px;color:#fff;font-weight:400;">Desligado</span>
+        <!-- ON toggle (hidden) -->
+        <div id="vp-toggle-on" style="display:none;width:49px;height:30px;border-radius:15px;background:#fff;position:relative;flex-shrink:0;">
+          <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:#0061a3;right:3px;top:3px;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div>
+        </div>
+        <span id="vp-label-on" style="display:none;font-size:12px;color:#fff;font-weight:400;">Ligado</span>
+      </div>
+    </div>
+
+    <!-- Waveform bar -->
+    <div id="vp-waveform" style="position:absolute;top:122px;left:14px;width:189px;height:38px;background:#fff;border:1px solid #2c9626;border-radius:20px;overflow:hidden;">
+      <div id="vp-wave-icon" style="position:absolute;left:9px;top:5px;width:24px;height:24px;opacity:1;">
+        <img src="https://www.figma.com/api/mcp/asset/ac581b8d-e56f-434c-8bfb-ffe61f98cff9" style="width:24px;height:24px;" alt="voz">
+      </div>
+      <span id="wave-label" style="position:absolute;left:43px;top:11px;font-size:12px;font-weight:600;color:#c4c7d1;white-space:nowrap;">Ouvindo…</span>
+      <!-- Wave bars (absolute, matching Figma node 183:159) -->
+      <div class="wb" style="position:absolute;left:137px;top:16px;height:6px;"></div>
+      <div class="wb" style="position:absolute;left:144px;top:14px;height:10px;"></div>
+      <div class="wb" style="position:absolute;left:151px;top:11px;height:16px;"></div>
+      <div class="wb" style="position:absolute;left:157px;top:13px;height:12px;"></div>
+      <div class="wb" style="position:absolute;left:164px;top:9px;height:20px;"></div>
+      <div class="wb" style="position:absolute;left:170px;top:15px;height:8px;"></div>
+      <div class="wb" style="position:absolute;left:176px;top:12px;height:14px;"></div>
+    </div>
+
+    <!-- Messages -->
+    <div id="vp-msgs">
+      <!-- Bot: boas-vindas / resumo (191:337) -->
+
+      <!-- <div style="background:#f5f5f5;border:1px solid #8ea9bc;border-radius:0 12px 12px 12px;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;display:flex;gap:6px;align-items:flex-start;">
+        <img src="https://www.figma.com/api/mcp/asset/4dbb2d7e-96ff-4ff7-8abb-67de820e3344" style="width:17px;height:17px;flex-shrink:0;margin-top:1px;" alt="">
+        <span style="color:#1c1c26;">Importei 29 campos de sua declaração e encontrei 3 pontos de atenção. Quer revisar esta etapa?</span>
+      </div> -->
+      <!-- User: Sim, quero. (191:343) -->
+      <!-- <div style="background:#8e8e93;color:#fff;border-radius:12px 12px 12px 0;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;margin-right:8px;">Sim, quero.</div> -->
+
+      <!-- Bot: O que deseja revisar? (191:363) -->
+
+      <!-- <div style="background:#f5f5f5;border:1px solid #8ea9bc;border-radius:0 12px 12px 12px;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;display:flex;gap:6px;align-items:flex-start;">
+        <img src="https://www.figma.com/api/mcp/asset/4dbb2d7e-96ff-4ff7-8abb-67de820e3344" style="width:17px;height:17px;flex-shrink:0;margin-top:1px;" alt="">
+        <span style="color:#1c1c26;">O que deseja revisar?</span>
+      </div> -->
+
+      <!-- User: Meu telefone. (191:371) -->
+      <!-- <div style="background:#757880;color:#fff;border-radius:12px 12px 12px 0;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;margin-right:8px;">Meu telefone.</div> -->
+
+      <!-- Bot: Ok, me fale o DD. (191:369) -->
+      <!-- <div style="background:#f5f5f5;border:1px solid #8ea9bc;border-radius:0 12px 12px 12px;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;display:flex;gap:6px;align-items:flex-start;">
+        <img src="https://www.figma.com/api/mcp/asset/4dbb2d7e-96ff-4ff7-8abb-67de820e3344" style="width:17px;height:17px;flex-shrink:0;margin-top:1px;" alt="">
+        <span style="color:#1c1c26;">Ok, me fale o DD.</span>
+      </div> -->
+    </div>
+
+    <!-- QA Chips (191:348 — pré-populado, igual ao Figma) -->
+    <div id="vp-chips" style="display:flex;">
+      <button onclick="addMessage('Ver detalhes',true);hideChips();" style="width:188px;height:32px;border-radius:100px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid #0061a3;background:#f2f5fc;color:#0061a3;">Ver detalhes</button>
+      <button onclick="addMessage('Confirmar tudo',true);hideChips();" style="width:188px;height:32px;border-radius:100px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid #0061a3;background:#0061a3;color:#fff;">Confirmar tudo</button>
+    </div>
+
+    <!-- InputBar -->
+    <div style="position:absolute;top:671px;left:16px;width:187px;height:98px;">
+      <!-- SVG visual layer (exact Figma) -->
+      <svg width="187" height="98" viewBox="0 0 187 98" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;pointer-events:none;">
+<g clip-path="url(#clip0_191_353)">
+<rect width="187" height="98" rx="8" fill="white"/>
+<g filter="url(#filter0_d_191_353)">
+<rect x="10" y="12" width="27" height="27" rx="13.5" fill="#2C9626"/>
+<mask id="mask0_191_353" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="16" y="17" width="17" height="17">
+<rect x="16" y="17" width="17" height="17" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_191_353)">
+<path d="M20.8295 32.982C20.7286 32.8798 20.6782 32.7566 20.6782 32.6123C20.6782 32.4681 20.7293 32.3456 20.8315 32.2447C20.9338 32.1438 21.057 32.0934 21.2014 32.0934C21.3456 32.0934 21.4682 32.1445 21.569 32.2467C21.6699 32.349 21.7203 32.4722 21.7203 32.6164C21.7203 32.7608 21.6692 32.8834 21.567 32.9842C21.4648 33.085 21.3415 33.1354 21.1971 33.1354C21.0529 33.1354 20.9303 33.0843 20.8295 32.982ZM23.981 33.1354C23.8396 33.1354 23.7188 33.0838 23.6185 32.9807C23.5183 32.8775 23.4682 32.7554 23.4682 32.6144C23.4682 32.4734 23.5189 32.3514 23.6202 32.2481C23.7214 32.145 23.8434 32.0934 23.9863 32.0934C24.1292 32.0934 24.2522 32.1445 24.3555 32.2467C24.4586 32.349 24.5102 32.4722 24.5102 32.6164C24.5102 32.7608 24.459 32.8834 24.3565 32.9842C24.2539 33.085 24.1288 33.1354 23.981 33.1354ZM26.4024 32.982C26.3015 32.8798 26.2511 32.7566 26.2511 32.6123C26.2511 32.4681 26.3022 32.3456 26.4044 32.2447C26.5066 32.1438 26.6299 32.0934 26.7743 32.0934C26.9185 32.0934 27.0411 32.1445 27.1419 32.2467C27.2428 32.349 27.2932 32.4722 27.2932 32.6164C27.2932 32.7608 27.2421 32.8834 27.1399 32.9842C27.0376 33.085 26.9144 33.1354 26.77 33.1354C26.6258 33.1354 26.5032 33.0843 26.4024 32.982ZM22.8791 25.3884C22.5823 25.0803 22.4339 24.7037 22.4339 24.2586V20.0703C22.4339 19.6417 22.584 19.2776 22.884 18.9781C23.1841 18.6787 23.55 18.529 23.9815 18.529C24.4131 18.529 24.7791 18.6787 25.0797 18.9781C25.3802 19.2776 25.5305 19.6417 25.5305 20.0703V24.2586C25.5305 24.7037 25.3821 25.0803 25.0853 25.3884C24.7886 25.6965 24.4209 25.8506 23.9822 25.8506C23.5435 25.8506 23.1758 25.6965 22.8791 25.3884ZM23.5531 30.5653V28.6441C22.5149 28.5325 21.6189 28.1135 20.8652 27.3869C20.1115 26.6604 19.681 25.7664 19.5735 24.7048C19.5552 24.5825 19.5866 24.4775 19.6678 24.39C19.749 24.3024 19.8508 24.2586 19.9733 24.2586C20.0959 24.2586 20.198 24.3022 20.2795 24.3894C20.361 24.4765 20.4115 24.5819 20.4309 24.7057C20.5459 25.6021 20.9435 26.342 21.6237 26.9256C22.3038 27.509 23.0886 27.8007 23.9781 27.8007C24.8819 27.8007 25.6716 27.5073 26.3474 26.9204C27.0231 26.3336 27.4185 25.5953 27.5335 24.7057C27.5528 24.5819 27.6039 24.4765 27.6866 24.3894C27.7693 24.3022 27.8719 24.2586 27.9945 24.2586C28.1171 24.2586 28.2184 24.3024 28.2985 24.39C28.3784 24.4775 28.4092 24.5825 28.3909 24.7048C28.2834 25.7527 27.8557 26.6433 27.1078 27.3767C26.3597 28.11 25.4609 28.5325 24.4113 28.6441V30.5653C24.4113 30.6871 24.37 30.789 24.2875 30.8711C24.205 30.9533 24.1025 30.9944 23.9802 30.9944C23.8578 30.9944 23.756 30.9533 23.6748 30.8711C23.5937 30.789 23.5531 30.6871 23.5531 30.5653Z" fill="white"/>
+</g>
+</g>
+<rect x="126" y="56" width="50" height="32" rx="16" fill="#0061A3"/>
+<path d="M141 81L162 72L141 63V70L156 72L141 74V81Z" fill="white"/>
+</g>
+<rect x="0.5" y="0.5" width="186" height="97" rx="7.5" stroke="#D9D9D9"/>
+<defs>
+<filter id="filter0_d_191_353" x="2" y="6" width="43" height="43" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2"/>
+<feGaussianBlur stdDeviation="4"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_191_353"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_191_353" result="shape"/>
+</filter>
+<clipPath id="clip0_191_353">
+<rect width="187" height="98" rx="8" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+      <!-- Interactive overlays -->
+      <!-- Mic FAB (over green circle at x=10,y=12,w=27,h=27) -->
+      <div id="vp-mic-fab" onclick="onMicFabClick()" style="position:absolute;left:10px;top:12px;width:27px;height:27px;border-radius:50%;cursor:pointer;"></div>
+      <!-- Text input (over placeholder text area) -->
+      <input id="vp-text-input" type="text" placeholder="Fale ou escreva…" onkeydown="if(event.key==='Enter')handleTextInput()" style="position:absolute;left:44px;top:10px;width:118px;height:36px;border:none;outline:none;font-size:13px;color:#1e1e1e;font-family:'Inter',sans-serif;background:transparent;" />
+      <!-- Send button (over blue rect at x=126,y=56,w=50,h=32) -->
+      <div onclick="handleTextInput()" style="position:absolute;left:126px;top:56px;width:50px;height:32px;border-radius:16px;cursor:pointer;"></div>
+    </div>
+
+  </div><!-- /VoicePanel -->
+
+  <!-- ── Impostômetro ── -->
+  <div style="position:absolute;top:953px;left:20px;width:335px;height:187px;background:#f7fff7;border:1px solid #2c9626;border-radius:8px;overflow:hidden;">
+    <!-- Green header (231:249) -->
+    <div style="position:absolute;top:0;left:0;width:334px;height:37px;background:#2c9626;border-radius:8px 8px 0 0;">
+      <!-- Cash-coin icon — 4 vetores compostos (231:256) -->
+      <div style="position:absolute;left:10px;top:10px;width:16px;height:16px;overflow:hidden;">
+        <img src="https://www.figma.com/api/mcp/asset/5ff2fe5f-37f5-4cba-9a96-45bb28a98918" style="position:absolute;top:0;left:0;right:0;bottom:37.5%;width:100%;height:62.5%;object-fit:fill;" alt="">
+        <img src="https://www.figma.com/api/mcp/asset/e9ca4fcb-10bd-4a11-9a2f-251509826790" style="position:absolute;top:37.5%;left:37.5%;right:0;bottom:0;width:62.5%;height:62.5%;object-fit:fill;" alt="">
+        <img src="https://www.figma.com/api/mcp/asset/0eeabd9e-87d0-45a8-9aab-741affd34334" style="position:absolute;top:18.76%;left:37.5%;right:37.5%;bottom:58.44%;width:25%;height:22.8%;object-fit:fill;" alt="">
+        <img src="https://www.figma.com/api/mcp/asset/9e71351a-b7f2-4fd5-9244-9b9b6dd46b86" style="position:absolute;top:53.13%;left:58.98%;right:21.49%;bottom:15.63%;width:19.53%;height:31.24%;object-fit:fill;" alt="">
+      </div>
+      <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#fff;white-space:nowrap;">Impostômetro</p>
+    </div>
+    <!-- Tax type choice (231:268) — left:11px conforme Figma -->
+    <p style="position:absolute;left:11px;top:49px;font-size:10px;color:#757880;white-space:nowrap;">Escolha seu tipo de imposto: <strong>permitidos por lei</strong> ou <strong>padrão.</strong></p>
+    <!-- Switch OFF + label (231:270 / 231:271) — left:11px conforme Figma -->
+    <div style="position:absolute;left:11px;top:68px;display:flex;align-items:center;gap:8px;cursor:pointer;">
+      <div style="width:49px;height:30px;border-radius:100px;background:#e0e0e0;position:relative;flex-shrink:0;">
+        <div style="position:absolute;width:14px;height:14px;border-radius:50%;background:#79747e;left:6px;top:8px;"></div>
+      </div>
+      <span style="font-size:14px;color:#1e1e1e;">Permitidos por lei</span>
+    </div>
+    <!-- Saldo label (231:279) — left:11px conforme Figma -->
+    <p style="position:absolute;left:11px;top:116px;font-size:10px;color:#757880;width:191px;">Seu saldo de imposto para receber:</p>
+    <!-- Saldo value box (231:280) — left:11px conforme Figma -->
+    <div style="position:absolute;left:11px;top:132px;width:306px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;">
+      <span style="font-size:14px;color:#1e1e1e;">R$ 76.560,00</span>
+    </div>
+  </div>
+
+  <!-- ── Bottom navigation buttons ── -->
+  <!-- Voltar -->
+  <div style="position:absolute;top:1183px;left:805px;width:98px;height:44px;background:#f2f5fc;border:1px solid #5856d6;border-radius:100px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <p style="font-size:14px;font-weight:600;color:#0061a3;white-space:nowrap;">← Voltar</p>
+  </div>
+  <!-- Confirmar e continuar -->
+  <div style="position:absolute;top:1183px;left:967px;width:216px;height:44px;background:#0061a3;border-radius:100px;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <p style="font-size:14px;font-weight:600;color:#fff;white-space:pre;">Confirmar e continuar  →</p>
+  </div>
+
+</div><!-- /canvas -->
+
+<script>
+const S = {
+  AWAIT_START:    'AWAIT_START',
+  AWAIT_REVIEW:   'AWAIT_REVIEW',
+  AWAIT_DADO:     'AWAIT_DADO',
+  AWAIT_DDD:      'AWAIT_DDD',
+  AWAIT_CELULAR:  'AWAIT_CELULAR',
+  AWAIT_CONFIRMA: 'AWAIT_CONFIRMA',
+  DONE:           'DONE'
+};
+let state = S.AWAIT_START;
+let pendingDDD = '', pendingCel = '';
+let synth = window.speechSynthesis;
+let recog = null;
+let isListening = false;
+
+// ── Speech Recognition ────────────────────────────────
+function setupRecog() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('SpeechRecognition não disponível — use Google Chrome.'); return; }
+  recog = new SR();
+  recog.lang = 'pt-BR';
+  recog.continuous = false;
+  recog.interimResults = false;
+  recog.onresult = e => {
+    const txt = e.results[0][0].transcript.trim();
+    addMessage(txt, true);
+    setWave(false);
+    handleInput(txt.toLowerCase());
+  };
+  recog.onerror = e => {
+    setWave(false);
+    if (e.error === 'not-allowed') showPermBar();
+  };
+  recog.onend = () => { isListening = false; setWave(false); };
+}
+
+function startListening() {
+  if (!recog) { setupRecog(); if (!recog) return; }
+  if (isListening) { try { recog.stop(); } catch(e){} }
+  try { recog.start(); isListening = true; setWave(true); } catch(e) {}
+}
+
+function setWave(on) {
+  document.querySelectorAll('.wb').forEach(b => b.classList.toggle('on', on));
+  document.getElementById('wave-label').textContent = on ? 'Ouvindo…' : 'Aguardando…';
+  const fab = document.getElementById('vp-mic-fab');
+  if (fab) fab.style.background = on ? '#1a5c15' : '#2c9626';
+}
+
+// ── Spoken numbers → digit string (PT-BR) ────────────
+function wordsToDigits(s) {
+  const pureDigits = s.replace(/[\s\-]/g,'').replace(/[^0-9]/g,'');
+  const numMap = {
+    'zero':0,'um':1,'uma':1,'dois':2,'duas':2,'três':3,'tres':3,'quatro':4,
+    'cinco':5,'seis':6,'sete':7,'oito':8,'nove':9,'dez':10,'onze':11,
+    'doze':12,'treze':13,'quatorze':14,'catorze':14,'quinze':15,
+    'dezesseis':16,'dezessete':17,'dezoito':18,'dezenove':19,
+    'vinte':20,'trinta':30,'quarenta':40,'cinquenta':50,
+    'sessenta':60,'setenta':70,'oitenta':80,'noventa':90
+  };
+  const tokens = s.toLowerCase().split(/[\s\-,]+/).filter(t => t.length > 0 && t !== 'e');
+  let wordBased = '';
+  for (const t of tokens) {
+    if (/^\d+$/.test(t)) { wordBased += t; }
+    else if (numMap[t] !== undefined) { wordBased += numMap[t]; }
+  }
+  return wordBased.length >= pureDigits.length ? wordBased : pureDigits;
+}
+
+// ── TTS + optional STT ────────────────────────────────
+function aiSay(text, opts = {}) {
+  const { delay = 0, listen = false } = opts;
+  addMessage(text, false);
+  setTimeout(() => {
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = 1.05; u.pitch = 1;
+    if (listen) { u.onend = () => startListening(); }
+    synth.speak(u);
+  }, delay);
+}
+
+// ── Chat bubble ───────────────────────────────────────
+function addMessage(text, isUser) {
+  const msgs = document.getElementById('vp-msgs');
+  const div = document.createElement('div');
+  if (isUser) {
+    div.style.cssText = 'background:#757880;color:#fff;border-radius:12px 12px 12px 0;padding:9px 30px 9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;margin-right:8px;';
+    const span = document.createElement('span');
+    span.textContent = text;
+    div.appendChild(span);
+    const userIcon = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    userIcon.setAttribute('width','17');
+    userIcon.setAttribute('height','17');
+    userIcon.setAttribute('viewBox','0 0 17 17');
+    userIcon.setAttribute('fill','none');
+    userIcon.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);flex-shrink:0;';
+    userIcon.innerHTML = `<mask id="mask0_191_345" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="17" height="17"><rect width="17" height="17" fill="#D9D9D9"/></mask><g mask="url(#mask0_191_345)"><path d="M3.05245 13.0825C3.84749 12.549 4.65584 12.1317 5.47752 11.8307C6.2992 11.5297 7.20002 11.3793 8.17999 11.3793C9.15995 11.3793 10.0613 11.5297 10.8842 11.8307C11.707 12.1317 12.516 12.549 13.311 13.0825C13.9195 12.4301 14.3972 11.6925 14.7442 10.8697C15.0912 10.0468 15.2647 9.15028 15.2647 8.18002C15.2647 6.20503 14.5777 4.53047 13.2037 3.15632C11.8295 1.78231 10.155 1.09531 8.17999 1.09531C6.205 1.09531 4.53043 1.78231 3.15629 3.15632C1.78228 4.53047 1.09528 6.20503 1.09528 8.18002C1.09528 9.15028 1.26928 10.0468 1.61727 10.8697C1.9654 11.6925 2.4438 12.4301 3.05245 13.0825ZM6.3399 7.80205C5.84289 7.30505 5.59439 6.69175 5.59439 5.96218C5.59439 5.23246 5.84289 4.61909 6.3399 4.12209C6.83705 3.62508 7.45041 3.37658 8.17999 3.37658C8.90956 3.37658 9.52293 3.62508 10.0201 4.12209C10.5171 4.61909 10.7656 5.23246 10.7656 5.96218C10.7656 6.69175 10.5171 7.30505 10.0201 7.80205C9.52293 8.29905 8.90956 8.54756 8.17999 8.54756C7.45041 8.54756 6.83705 8.29905 6.3399 7.80205ZM8.17999 16C7.08721 16 6.06518 15.797 5.11389 15.3909C4.16246 14.9849 3.33477 14.4274 2.63083 13.7185C1.92674 13.0098 1.37224 12.1816 0.967339 11.2339C0.562437 10.2863 0.359985 9.2683 0.359985 8.18002C0.359985 7.08942 0.563016 6.06847 0.969076 5.11718C1.37514 4.16589 1.9326 3.33821 2.64147 2.63412C3.35019 1.93017 4.17839 1.37517 5.12606 0.969107C6.07373 0.563046 7.0917 0.360016 8.17999 0.360016C9.27059 0.360016 10.2915 0.563046 11.2428 0.969107C12.1941 1.37517 13.0218 1.93017 13.7259 2.63412C14.4298 3.33821 14.9848 4.16589 15.3909 5.11718C15.797 6.06847 16 7.08942 16 8.18002C16 9.2683 15.797 10.2863 15.3909 11.2339C14.9848 12.1816 14.4298 13.0098 13.7259 13.7185C13.0218 14.4274 12.1941 14.9849 11.2428 15.3909C10.2915 15.797 9.27059 16 8.17999 16Z" fill="white"/></g>`;
+    div.appendChild(userIcon);
+  } else {
+    div.style.cssText = 'background:#f5f5f5;border:1px solid #8ea9bc;border-radius:0 12px 12px 12px;padding:9px 12px;font-size:12px;position:relative;flex-shrink:0;line-height:1.4;display:flex;gap:6px;align-items:flex-start;';
+    const logo = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    logo.setAttribute('viewBox','0 0 24 24');
+    logo.setAttribute('width','16');
+    logo.setAttribute('height','16');
+    logo.style.cssText = 'flex-shrink:0;margin-top:1px;';
+    logo.innerHTML = '<svg width="20" height="13" viewBox="0 0 20 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.9808 3.66801C13.9767 3.68075 13.967 3.69274 13.9621 3.70549C12.6464 2.91178 11.2736 2.20691 9.84833 1.6278C8.4264 2.22697 7.06052 2.95264 5.71581 3.70549C5.67251 3.76902 5.71243 3.72329 5.71581 3.72423C5.72705 3.72723 5.73605 3.75309 5.74917 3.76096C8.52105 5.4016 11.1177 7.36103 13.6231 9.37819L9.84589 13C9.45794 12.6741 9.1101 12.3011 8.74314 11.9514C7.10456 10.3893 5.44518 8.84762 3.7382 7.36047L4.58175 5.69172L5.65977 3.74316L4.06842 4.67237L2.0522 5.94848L0 4.42704C1.82093 3.33534 3.69209 2.3203 5.63597 1.461L6.68194 1.45575L7.80643 1.49323L9.78273 1.62517C9.79473 1.57682 9.73888 1.57532 9.70701 1.56089C9.40265 1.42258 9.05312 1.29813 8.73789 1.18025C8.31508 1.02226 7.88721 0.876073 7.45859 0.735136C7.94924 0.558403 8.44421 0.385418 8.94367 0.233424C9.17963 0.161644 9.69483 -0.027084 9.91486 0.00327739C10.0948 0.0280163 10.3628 0.124161 10.5466 0.177199C11.8141 0.54191 13.0541 1.03594 14.262 1.55958L14.2809 1.65272C14.1694 2.27382 14.1274 2.92265 14.0131 3.54131C14.006 3.5803 13.993 3.63071 13.9807 3.66819L13.9808 3.66801Z" fill="#013772"/><path d="M13.9995 3.70548C14.5087 3.44141 15.0025 3.14435 15.5168 2.88947C15.6879 2.80457 16.0697 2.5941 16.2294 2.55212C16.2526 2.54594 16.2683 2.54125 16.2935 2.54369C16.3514 2.5495 16.6578 2.71892 16.7361 2.75865C17.7403 3.26936 18.7124 3.84848 19.678 4.42722C18.7486 5.07361 17.8451 5.76087 16.9704 6.47979C16.5302 6.84169 16.1066 7.22683 15.6621 7.58105C13.7504 7.13706 11.8212 6.75455 9.87634 6.47923L9.91514 6.41513C11.224 5.48686 12.5403 4.56234 13.9311 3.75814C13.956 3.74371 13.9911 3.75233 13.9806 3.70566H13.9993L13.9995 3.70548Z" fill="#013772"/><path d="M9.47892 2.38029C10.2932 2.32238 11.4363 2.49817 11.985 3.16162C12.2875 3.52746 12.2748 3.98794 11.9749 4.35134C11.116 5.39225 8.2521 5.40968 7.55603 4.19841C6.90683 3.06867 8.63723 2.44007 9.47892 2.38029Z" fill="#013772"/></svg>';
+    div.appendChild(logo);
+    div.appendChild(document.createTextNode(text));
+  }
+  msgs.appendChild(div);
+  setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 50);
+}
+
+// ── Form field fill (animated) ────────────────────────
+function fillField(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.value = '';
+  el.classList.add('typing');
+  let i = 0;
+  const iv = setInterval(() => {
+    el.value += value[i]; i++;
+    if (i >= value.length) {
+      clearInterval(iv);
+      setTimeout(() => el.classList.remove('typing'), 1500);
+    }
+  }, 80);
+}
+
+// ── Chips ─────────────────────────────────────────────
+function showChips(items) {
+  const c = document.getElementById('vp-chips');
+  c.innerHTML = '';
+  c.style.display = 'flex';
+  items.forEach(({ label, value, primary }) => {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.style.cssText = `width:188px;height:32px;border-radius:100px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;border:1px solid #0061a3;${primary ? 'background:#0061a3;color:#fff;' : 'background:#f2f5fc;color:#0061a3;'}`;
+    btn.onclick = () => { addMessage(label, true); hideChips(); handleInput(value.toLowerCase()); };
+    c.appendChild(btn);
+  });
+}
+function hideChips() {
+  const c = document.getElementById('vp-chips');
+  c.style.display = 'none';
+  c.innerHTML = '';
+}
+
+// ── Utilities ─────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+function showPermBar() { document.getElementById('perm-bar').classList.add('show'); }
+function getUserName() {
+  const el = document.getElementById('f-nome');
+  const full = el ? el.value.trim() : '';
+  return full ? full.split(' ')[0] : 'contribuinte';
+}
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+function onMicFabClick() {
+  if (state === S.AWAIT_START) return;
+  if (isListening) { try { recog && recog.stop(); } catch(e){} }
+  else { startListening(); }
+}
+function handleTextInput() {
+  const inp = document.getElementById('vp-text-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  inp.value = '';
+  addMessage(val, true);
+  hideChips();
+  handleInput(val.toLowerCase());
+}
+
+// ══ MAIN STATE MACHINE ════════════════════════════════
+function handleInput(raw) {
+  const isYes = /^(sim|s|yes|confirmo|quero|claro|ok|pode|correto|isso|certo)/.test(raw) || /\b(sim|confirmo|correto|isso)\b/.test(raw);
+  const isNo  = /^(n[aã]o|nope|errado|outro|errei|diferente|repetir)/.test(raw) || /\b(n[aã]o|errado)\b/.test(raw);
+
+  switch(state) {
+    case S.AWAIT_REVIEW:
+      if (isYes) {
+        state = S.AWAIT_DADO;
+        aiSay('Qual dado você gostaria de revisar?', { delay: 400, listen: true });
+      } else {
+        state = S.DONE;
+        hideChips();
+        aiSay('Então finalizamos esta etapa. Clique em confirmar e continuar, para ir para a próxima etapa.', { delay: 400 });
+      }
+      break;
+
+    case S.AWAIT_DADO:
+      aiSay(`Ok, entendi, ${raw}.`, { delay: 300 });
+      state = S.AWAIT_DDD;
+      setTimeout(() => {
+        aiSay('Me fale o DDD com 2 dígitos.', { delay: 300, listen: true });
+        document.getElementById('row-phone').classList.add('row-focus');
+      }, 1000);
+      break;
+
+    case S.AWAIT_DDD: {
+      const digits = wordsToDigits(raw);
+      if (digits.length !== 2) {
+        aiSay('O DDD deve ter 2 dígitos. Me fale o DDD com 2 dígitos.', { delay: 300, listen: true });
+        break;
+      }
+      pendingDDD = digits;
+      aiSay(`Sim, o DDD é ${digits}.`, { delay: 300 });
+      state = S.AWAIT_CELULAR;
+      aiSay('E qual o telefone celular?', { delay: 1500, listen: true });
+      break;
+    }
+
+    case S.AWAIT_CELULAR: {
+      const digits = wordsToDigits(raw);
+      if (digits.length !== 9) {
+        aiSay('O telefone celular deve ter 9 dígitos. Por favor, fale o número completo.', { delay: 300, listen: true });
+        break;
+      }
+      pendingCel = digits;
+      const formatted = `${digits.slice(0,5)}-${digits.slice(5)}`;
+      const spelled  = digits.split('').join(', ');
+      state = S.AWAIT_CONFIRMA;
+      aiSay(`Seu celular é ${spelled}, confirma?`, { delay: 300, listen: true });
+      showChips([
+        { label: 'Sim, confirmo', value: 'sim', primary: true },
+        { label: 'Não, repetir', value: 'não' }
+      ]);
+      break;
+    }
+
+    case S.AWAIT_CONFIRMA:
+      hideChips();
+      if (isYes) {
+        fillField('f-ddd', pendingDDD);
+        setTimeout(() => { fillField('f-cel', `${pendingCel.slice(0,5)}-${pendingCel.slice(5)}`); }, 400);
+        document.getElementById('row-phone').classList.remove('row-focus');
+        document.getElementById('row-phone').classList.add('row-ok');
+        state = S.DONE;
+        hideChips();
+        aiSay('Ótimo! Dados preenchidos com sucesso.', { delay: 300 });
+        aiSay('Então finalizamos esta etapa. Clique em confirmar e continuar, para ir para a próxima etapa.', { delay: 2200 });
+      } else {
+        state = S.AWAIT_CELULAR;
+        aiSay('Pode repetir então?', { delay: 300, listen: true });
+      }
+      break;
+
+    case S.DONE:
+      aiSay('Esta etapa já foi finalizada. Clique em avançar para continuar.', { delay: 300 });
+      break;
+  }
+}
+
+// ══ TOGGLE ════════════════════════════════════════════
+let voiceEnabled = false;
+
+function closeBvModal() {
+  document.getElementById('bv-overlay').style.display = 'none';
+  // A conversa só inicia quando o usuário ligar o E-vocal assist switch
+}
+
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  const togOff = document.getElementById('vp-toggle-off');
+  const lblOff = document.getElementById('vp-label-off');
+  const togOn  = document.getElementById('vp-toggle-on');
+  const lblOn  = document.getElementById('vp-label-on');
+  const wv  = document.getElementById('vp-waveform');
+  const ico = document.getElementById('vp-wave-icon');
+  const lbl = document.getElementById('wave-label');
+
+  if (voiceEnabled) {
+    togOff.style.display = 'none';
+    lblOff.style.display = 'none';
+    togOn.style.display  = 'block';
+    lblOn.style.display  = 'block';
+    wv.style.borderColor = '#2c9626';
+    ico.style.opacity = '1';
+    lbl.style.color = '#c4c7d1';
+    lbl.textContent = 'Aguardando…';
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => { setupRecog(); bootDialogue(); })
+      .catch(() => { showPermBar(); setupRecog(); bootDialogue(); });
+  } else {
+    togOff.style.display = 'block';
+    lblOff.style.display = 'block';
+    togOn.style.display  = 'none';
+    lblOn.style.display  = 'none';
+    wv.style.borderColor = '#c4c7d1';
+    ico.style.opacity = '.35';
+    lbl.style.color = '#aaa';
+    lbl.textContent = 'Desligado';
+    setWave(false);
+    synth.cancel();
+    if (recog) { try { recog.stop(); } catch(e) {} }
+    state = S.AWAIT_START;
+    document.getElementById('vp-msgs').innerHTML = '';
+    hideChips();
+  }
+}
+
+function bootDialogue() {
+  document.getElementById('vp-msgs').innerHTML = '';
+  hideChips();
+  const name = getUserName();
+  const greeting = getGreeting();
+  state = S.AWAIT_REVIEW;
+  synth.cancel();
+
+  // Sequência com pausas entre cada frase [texto, pausaDepois(ms)]
+  const seq = [
+    [`${greeting}, ${name}!`, 500],
+    ['Você escolheu a declaração pré-preenchida.', 2000],
+    ['Caso enviasse hoje sua declaração, você receberia sua restituição no primeiro lote.', 2000],
+    ['Importei 29 campos de sua declaração e encontrei 3 pontos de atenção.', 3000],
+    ['Quer revisar esta etapa?', 0]
+  ];
+
+  let i = 0;
+  function next() {
+    if (i >= seq.length) return;
+    const [text, pause] = seq[i++];
+    const isLast = i === seq.length;
+    if (isLast) {
+      showChips([
+        { label: 'Sim, quero revisar', value: 'sim', primary: true },
+        { label: 'Não, tudo certo', value: 'não' }
+      ]);
+    }
+    addMessage(text, false);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'pt-BR'; u.rate = 1.05; u.pitch = 1;
+    u.onend = () => isLast ? startListening() : setTimeout(next, pause);
+    synth.speak(u);
+  }
+
+  setTimeout(next, 600);
+}
+</script>
+</body>
+</html>
