@@ -53,6 +53,12 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
 /* Input */
 .f-input{border:1px solid #f0f0f0;border-radius:8px;background:#fff;padding:9px 11px 8px;font-size:14px;color:#1e1e1e;font-family:'Inter',sans-serif;width:100%;outline:none;text-transform:uppercase}
 .f-input:focus{border-color:#0061a3}
+
+/* Stepper tooltip */
+.stepper-wrap{position:relative;cursor:default;z-index:999998;}
+.stepper-tooltip{visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 9px);left:50%;transform:translateX(-50%);background:#fff;color:#000;font-size:14px;font-weight:500;line-height:1.5;padding:14px 18px;border-radius:10px;width:240px;white-space:normal;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25));transition:opacity .15s ease;z-index:999999;pointer-events:none;}
+.stepper-tooltip::after{content:"";position:absolute;bottom:-9px;left:50%;margin-left:-9px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:9px solid #fff;}
+.stepper-wrap:hover .stepper-tooltip{visibility:visible;opacity:1;}
 </style>
 </head>
 <body>
@@ -87,26 +93,28 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
   <!-- ── TopAppBar ── -->
   <div style="position:absolute;top:0;left:1px;width:1439px;height:81px;background:#f5f9fc;border:1px solid #c4c7d1;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;">
     <!-- Logo -->
-    <img src="https://www.figma.com/api/mcp/asset/12bbd161-0f43-422c-8739-06fab4ad3c68" style="position:absolute;left:18px;top:12px;width:64px;height:57px;object-fit:contain;" alt="Logo">
+    <img src="images/topappbar-logo.svg" style="position:absolute;left:18px;top:12px;width:64px;height:57px;object-fit:contain;" alt="Logo">
     <p style="position:absolute;left:100px;top:20px;font-size:32px;font-weight:700;color:#003772;white-space:nowrap;line-height:1;">Declara·IR <span style="font-weight:300;">Fácil</span></p>
+    <!-- Icon button outline (hit area behind folder-open; the outline only appears on hover/focus in Figma, no static asset for the resting state) -->
+    <div style="position:absolute;left:1069px;top:18px;width:48px;height:48px;border-radius:100px;"></div>
     <!-- Toolbar icons -->
-    <img src="https://www.figma.com/api/mcp/asset/d9f1fa9c-8df2-4299-ac2e-13602100981f" style="position:absolute;left:1083px;top:27px;width:24px;height:24px;" alt="folder-open" title="Abrir">
-    <img src="https://www.figma.com/api/mcp/asset/2a50548a-0ac5-432f-9dfe-094f9195816d" style="position:absolute;left:1134px;top:29px;width:24px;height:24px;" alt="trash-can" title="Excluir">
-    <img src="https://www.figma.com/api/mcp/asset/f0434d81-de3e-4ce1-b3e7-4cf5d6bfc30c" style="position:absolute;left:1186px;top:30px;width:24px;height:24px;" alt="salvar" title="Salvar">
-    <img src="https://www.figma.com/api/mcp/asset/51ba20ed-567d-4ee4-942e-e6d0f55929c7" style="position:absolute;left:1237px;top:30px;width:24px;height:24px;" alt="file-check" title="Verificar">
-    <img src="https://www.figma.com/api/mcp/asset/442b7171-bf0c-421f-870d-33dc5df258ab" style="position:absolute;left:1287px;top:29px;width:24px;height:24px;" alt="file-send" title="Enviar">
-    <img src="https://www.figma.com/api/mcp/asset/ce76a410-6fa6-4778-9e82-c0c6682431c8" style="position:absolute;left:1339px;top:30px;width:24px;height:24px;" alt="help" title="Ajuda">
-    <img src="https://www.figma.com/api/mcp/asset/b98f7106-92b7-45df-b7b5-b5f955e28ecc" style="position:absolute;left:1390px;top:30px;width:24px;height:24px;" alt="fechar" title="Fechar">
+    <img src="images/topappbar-folder-open.svg" style="position:absolute;left:1083px;top:29px;width:24px;height:24px;" alt="folder-open" title="Abrir">
+    <img src="images/topappbar-trash-can.svg" style="position:absolute;left:1134px;top:29px;width:24px;height:24px;" alt="trash-can" title="Excluir">
+    <img src="images/topappbar-content-save.svg" style="position:absolute;left:1185px;top:29px;width:24px;height:24px;" alt="salvar" title="Salvar">
+    <img src="images/topappbar-file-check.svg" style="position:absolute;left:1236px;top:29px;width:24px;height:24px;" alt="file-check" title="Verificar">
+    <img src="images/topappbar-file-send.svg" style="position:absolute;left:1287px;top:29px;width:24px;height:24px;" alt="file-send" title="Enviar">
+    <img src="images/topappbar-help-circle.svg" style="position:absolute;left:1338px;top:29px;width:24px;height:24px;" alt="help" title="Ajuda">
+    <img src="images/topappbar-close-box.svg" style="position:absolute;left:1389px;top:29px;width:24px;height:24px;" alt="fechar" title="Fechar">
   </div>
 
   <!-- ── UserCard ── -->
   <div style="position:absolute;top:104px;left:20px;width:334px;height:66px;background:#fff;border:1px solid #0084b3;border-radius:8px;">
     <!-- Avatar -->
-    <img src="https://www.figma.com/api/mcp/asset/789f0c07-9566-4d5d-a661-1d9a9d75c5fc" style="position:absolute;left:7.85px;top:14.35px;width:40px;height:36px;object-fit:contain;" alt="avatar">
+    <svg style="position:absolute;left:7.85px;top:14.35px;width:40px;height:36px;" viewBox="0 0 24 24" fill="#0061a3" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
     <!-- Divider -->
     <div style="position:absolute;left:58px;top:13.2px;width:1px;height:39.6px;background:#0061a3;"></div>
     <!-- Trophy -->
-   <img src="https://www.figma.com/api/mcp/asset/fa7693a8-a324-48b7-adec-f0e04440fa5b" style="position:absolute;left: 293px;top:19.23px;width: 18px;height: 18px;object-fit:contain;" alt="trophy">
+   <svg style="position:absolute;left:293px;top:19.23px;width:18px;height:18px;" viewBox="0 0 24 24" fill="#cc8f00" xmlns="http://www.w3.org/2000/svg"><path d="M20 3h-2V1H6v2H4c-1.1 0-2 .9-2 2v2c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-3v-4.1c1.63-.33 2.98-1.46 3.61-2.96C20.08 11.63 22 9.55 22 7V5c0-1.1-.9-2-2-2zM4 7V5h2v3.82C4.84 8.4 4 7.3 4 7zm16 0c0 1.3-.84 2.4-2 2.82V5h2v2z"/></svg>
     <!-- Name -->
     <p style="position:absolute;left:100px;top:18px;font-size:12px;font-weight:600;color:#0084b3;text-transform:uppercase;white-space:nowrap;letter-spacing:-.2px;">Joseph Jason N. Momoa</p>
     <!-- CPF -->
@@ -146,25 +154,25 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
 
     <!-- Sub-items list -->
     <div style="position:absolute;top:40px;left:34px;width:283px;">
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/939f7ef7-9b01-44c0-9bd8-e2a3e881ee98" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:2px;"><span style="font-size:12px;color:#000;line-height:24px;">Meus dados pessoais</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/589837f1-428f-49f9-9685-1e1769b16537" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:26px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem você sustenta (filhos, cônjuge…)</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/c28cd5bb-0d69-4885-b51f-e6c080a5db8e" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:50px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem recebe pensão alimentícia sua</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/0eaa9fed-348d-4324-898a-327e8acb1295" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:74px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário e pagamentos recebidos de empresas</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/0a538cf0-8412-449e-8f34-9c88d23ba8d8" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:98px;"><span style="font-size:12px;color:#000;line-height:24px;">Outros tipos de pagamentos recebidos</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/151babc2-c7bd-447f-b848-c209dfacb54f" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:122px;"><span style="font-size:12px;color:#000;line-height:24px;">Dinheiro que você recebeu e não paga imposto</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/1843fbca-864b-45c9-afe6-c354687ac0cb" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:146px;"><span style="font-size:12px;color:#000;line-height:24px;">Ganhos com imposto descontado no pagamento</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/c41dba7d-ad60-477c-8fe6-216aa11077d5" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:170px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário em disputa judicial</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/76c01c24-f2ee-48e1-97ee-e40f88f7a3be" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:194px;"><span style="font-size:12px;color:#000;line-height:24px;">Valores atrasados recebidos de uma vez</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/2e0ce08b-844d-41f1-9957-5c629831aad6" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:218px;"><span style="font-size:12px;color:#000;line-height:24px;">Imposto já descontado do seu salário</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/ed590366-7d4f-4dbf-bc0e-1199d501434e" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:242px;"><span style="font-size:12px;color:#000;line-height:24px;">Gastos que podem reduzir imposto (saúde, etc...)</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/3abf50d2-2651-4e05-a665-cacec2018423" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:266px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações feitas</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/440b8dad-085e-41de-82c5-78ea744972ab" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:290px;"><span style="font-size:12px;color:#000;line-height:24px;">Doar parte do seu imposto agora</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/bc67be52-ea4d-4e41-8d72-a561de960d80" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:314px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você tem (imóvel, carro, investimentos…)</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/dc70abfa-acba-4403-9bce-ad98b9c56373" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:338px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você deve para a Receita</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/49a6da6b-6ea8-4d84-9db9-37c5ff192058" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:362px;"><span style="font-size:12px;color:#000;line-height:24px;">Declaração de pessoa que faleceu</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/6ab2babd-439f-4c8f-bb79-d9734be7db53" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:386px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações eleitorais</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/d1e547be-53de-46ad-a805-6267bf81d253" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:410px;"><span style="font-size:12px;color:#000;line-height:24px;">Trazer dados de outro sistema</span></div>
-      <div style="display:flex;align-items:center;height:24px;"><img src="https://www.figma.com/api/mcp/asset/d432828d-7182-45b3-a9c9-6fb473181e1b" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:434px;"><span style="font-size:12px;color:#000;line-height:24px;">Checar se está tudo certo</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-account_circle.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:2px;"><span style="font-size:12px;color:#000;line-height:24px;">Meus dados pessoais</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-account_child_invert.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:26px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem você sustenta (filhos, cônjuge…)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-parent_child_dining.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:50px;"><span style="font-size:12px;color:#000;line-height:24px;">Quem recebe pensão alimentícia sua</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-attach_money.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:74px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário e pagamentos recebidos de empresas</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-currency_exchange.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:98px;"><span style="font-size:12px;color:#000;line-height:24px;">Outros tipos de pagamentos recebidos</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-price_check.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:122px;"><span style="font-size:12px;color:#000;line-height:24px;">Dinheiro que você recebeu e não paga imposto</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-mintmark.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:146px;"><span style="font-size:12px;color:#000;line-height:24px;">Ganhos com imposto descontado no pagamento</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-money_off.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:170px;"><span style="font-size:12px;color:#000;line-height:24px;">Salário em disputa judicial</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-money_bag.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:194px;"><span style="font-size:12px;color:#000;line-height:24px;">Valores atrasados recebidos de uma vez</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-finance_chip.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:218px;"><span style="font-size:12px;color:#000;line-height:24px;">Imposto já descontado do seu salário</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-markdown_paste.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:242px;"><span style="font-size:12px;color:#000;line-height:24px;">Gastos que podem reduzir imposto (saúde, etc...)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-approval_delegation.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:266px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações feitas</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-hail.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:290px;"><span style="font-size:12px;color:#000;line-height:24px;">Doar parte do seu imposto agora</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-add_home.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:314px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você tem (imóvel, carro, investimentos…)</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-payment_arrow_down.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:338px;"><span style="font-size:12px;color:#000;line-height:24px;">O que você deve para a Receita</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-guardian.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:362px;"><span style="font-size:12px;color:#000;line-height:24px;">Declaração de pessoa que faleceu</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-how_to_vote.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:386px;"><span style="font-size:12px;color:#000;line-height:24px;">Doações eleitorais</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-input_circle.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:410px;"><span style="font-size:12px;color:#000;line-height:24px;">Trazer dados de outro sistema</span></div>
+      <div style="display:flex;align-items:center;height:24px;"><img src="images/navrail-folder_check.svg" style="position:absolute;left:-26px;width:20px;height:20px;object-fit:contain;top:434px;"><span style="font-size:12px;color:#000;line-height:24px;">Checar se está tudo certo</span></div>
     </div>
 
     <!-- Section 2: Trabalho no campo -->
@@ -204,10 +212,11 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
   </div>
 
   <!-- ── Main content area ── -->
-  <div style="position:absolute;top:93px;left:354px;width:827px;height:1047px;background:#f7f7f7;overflow:hidden;">
+  <div style="position:absolute;top:93px;left:354px;width:827px;height:1047px;background:#f7f7f7;overflow:visible;">
 
-    <!-- ETAPA 1/6 badge -->
-    <div style="position:absolute;left:11px;top:-1px;width:86px;height:88px;">
+    <!-- ETAPA 1/6 badge (stepper etapa) -->
+    <div class="stepper-wrap" style="position:absolute;left:11px;top:-1px;width:86px;height:88px;">
+      <div class="stepper-tooltip">1ª etapa de 6 etapas, conforme menu à esquerda.</div>
       <svg width="86" height="88" viewBox="0 0 86 88" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M29.5964 64.4282V58.61H33.5169V59.6242H30.8265V61.0106H33.3152V62.0248H30.8265V63.414H33.5282V64.4282H29.5964ZM34.2733 59.6242V58.61H39.0517V59.6242H37.2704V64.4282H36.0545V59.6242H34.2733ZM40.1305 64.4282H38.8123L40.8208 58.61H42.4061L44.4118 64.4282H43.0936L41.6362 59.9396H41.5907L40.1305 64.4282ZM40.0481 62.1413H43.1618V63.1015H40.0481V62.1413ZM45.112 64.4282V58.61H47.4075C47.8488 58.61 48.2247 58.6943 48.5353 58.8629C48.8459 59.0295 49.0827 59.2616 49.2456 59.5589C49.4103 59.8544 49.4927 60.1953 49.4927 60.5816C49.4927 60.968 49.4094 61.3089 49.2427 61.6044C49.0761 61.8998 48.8346 62.1299 48.5183 62.2947C48.2039 62.4595 47.8232 62.5419 47.3762 62.5419H45.9132V61.5561H47.1774C47.4141 61.5561 47.6092 61.5153 47.7626 61.4339C47.9179 61.3506 48.0334 61.236 48.1092 61.0902C48.1869 60.9424 48.2257 60.7729 48.2257 60.5816C48.2257 60.3884 48.1869 60.2199 48.1092 60.0759C48.0334 59.9301 47.9179 59.8174 47.7626 59.7379C47.6073 59.6564 47.4103 59.6157 47.1717 59.6157H46.3422V64.4282H45.112ZM50.6227 64.4282H49.3045L51.313 58.61H52.8983L54.9039 64.4282H53.5858L52.1284 59.9396H52.0829L50.6227 64.4282ZM50.5403 62.1413H53.6539V63.1015H50.5403V62.1413Z" fill="#0061A3"/>
 <path d="M45.9882 28.7273V52H41.0677V33.3977H40.9314L35.6018 36.7386V32.375L41.3632 28.7273H45.9882Z" fill="#0061A3"/>
@@ -225,15 +234,15 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
     <!-- Legend -->
     <div style="position:absolute;left:734px;top:16px;">
       <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-        <img src="https://www.figma.com/api/mcp/asset/7c04c5ea-ef36-4c27-a56d-75b43b6b7e07" style="width:12px;height:12px;" alt="">
+        <div style="width:12px;height:12px;border-radius:50%;background:#0061a3;flex-shrink:0;"></div>
         <span style="font-size:8px;color:#000;font-weight:400;">ETAPA ATUAL</span>
       </div>
       <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">
-        <img src="https://www.figma.com/api/mcp/asset/3488587f-27b2-4aef-9d1b-0418c110bd0f" style="width:12px;height:12px;" alt="">
+        <div style="width:12px;height:12px;border-radius:50%;background:#e5a000;flex-shrink:0;"></div>
         <span style="font-size:8px;color:#000;font-weight:400;">COM PROBLEMAS</span>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
-        <img src="https://www.figma.com/api/mcp/asset/96fe07f0-5c7c-49d3-aa1c-804ad38b2c25" style="width:12px;height:12px;" alt="">
+        <div style="width:12px;height:12px;border-radius:50%;background:#2c9626;flex-shrink:0;"></div>
         <span style="font-size:8px;color:#000;font-weight:400;">CONCLUÍDA</span>
       </div>
     </div>
@@ -252,13 +261,13 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
 
     <!-- StreakCard -->
     <div style="position:absolute;top:94px;left:22px;width:805px;height:48px;background:#fff;border:1px solid #2c9626;border-radius:8px;overflow:hidden;">
-      <img src="https://www.figma.com/api/mcp/asset/16aaaad0-3c3b-4d49-a0c1-8392ea88b017" style="position:absolute;left:14px;top:13px;width:20px;height:20px;" alt="estrela">
+      <svg style="position:absolute;left:14px;top:13px;width:20px;height:20px;" viewBox="0 0 24 24" fill="#2c9626" xmlns="http://www.w3.org/2000/svg"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
       <p style="position:absolute;left:41px;top:15px;font-size:13px;font-weight:600;color:#2c9626;width:748px;">3 dias seguidos! Você está no top 15% dos declarantes desta semana. Continue assim!</p>
     </div>
 
     <!-- Status chips -->
     <div style="position:absolute;top:156px;left:22px;width:163px;height:32px;background:#f3faff;border:1px solid #000;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
-      <img src="https://www.figma.com/api/mcp/asset/f529d345-2ca9-465d-ac63-215122d11603" style="position:absolute;left:4px;width:20px;height:20px;" alt="">
+      <svg style="position:absolute;left:4px;width:20px;height:20px;" viewBox="0 0 24 24" fill="#454752" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16v4H4V4zm0 6h16v10H4V10zm3.5 5.5l2 2 5-5-1.06-1.06L9.5 15.44l-.94-.94-1.06 1z"/></svg>
       <span style="position:absolute;left:30px;font-size:12px;color:#454752;white-space:nowrap;">29 dados importados</span>
     </div>
     <div style="position:absolute;top:156px;left:237px;width:117px;height:32px;background:#f3faff;border:1px solid #e5a000;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
@@ -266,7 +275,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
       <span style="position:absolute;left:28px;font-size:12px;color:#cc8f00;white-space:nowrap;">3 para revisar</span>
     </div>
     <div style="position:absolute;top:156px;left:404px;width:97px;height:32px;background:#f3faff;border:1px solid #ba1a1a;border-radius:100px;overflow:hidden;display:flex;align-items:center;">
-      <img src="https://www.figma.com/api/mcp/asset/f1825b79-18b7-4a0c-a3f7-a31c15d6f7a5" style="position:absolute;left:6px;width:17px;height:17px;" alt="">
+      <svg style="position:absolute;left:6px;width:17px;height:17px;" viewBox="0 0 24 24" fill="#ba1a1a" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/></svg>
       <span style="position:absolute;left:27px;font-size:12px;color:#ba1a1a;white-space:nowrap;">1 ausente</span>
     </div>
 
@@ -291,7 +300,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
         <p style="position:absolute;left:384px;top:10px;font-size:10px;color:#757880;">Raça/cor</p>
         <div style="position:absolute;left:384px;top:26px;width:184px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;">Selecione</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
 
@@ -360,7 +369,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
         <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;">Tipo</p>
         <div style="position:absolute;left:41px;top:24px;width:184px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;">Rua</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <p style="position:absolute;left:384px;top:8px;font-size:10px;color:#757880;">Nome da rua</p>
         <div style="position:absolute;left:384px;top:24px;width:372px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;"><span style="font-size:14px;color:#1e1e1e;text-transform:uppercase;">LOREM IPSUM DOLOR SIT AMET</span></div>
@@ -381,12 +390,12 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
         <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;">UF</p>
         <div style="position:absolute;left:41px;top:24px;width:77px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;">AA</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:67px;">Município</p>
         <div style="position:absolute;left:382px;top:24px;width:369px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">LOREM IPSUM DOLOR SIT AMET</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
 
@@ -398,12 +407,12 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
         <p style="position:absolute;left:41px;top:8px;font-size:10px;color:#757880;width:132px;">Trabalho para</p>
         <div style="position:absolute;left:41px;top:24px;width:292px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">FREE LANCER</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <p style="position:absolute;left:382px;top:8px;font-size:10px;color:#757880;width:122px;">Tipo de trabalho</p>
         <div style="position:absolute;left:382px;top:24px;width:405px;height:30px;border:1px solid #f0f0f0;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 11px;cursor:pointer;">
           <span style="font-size:14px;color:#1e1e1e;flex:1;text-transform:uppercase;">ATOR</span>
-          <img src="https://www.figma.com/api/mcp/asset/d288569c-5c62-409a-852a-69590606ad79" style="width:10px;height:6px;" alt="">
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l4 4 4-4" stroke="#757880" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
     </div><!-- /DataList -->
@@ -412,13 +421,13 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
 
   <!-- Check-circle icons (section verified) -->
   <div style="position:absolute;left:393px;top:320px;width:15px;height:15px;overflow:hidden;">
-    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="#2c9626" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm-1.99 15L5 12l1.41-1.41 3.6 3.59 7.19-7.19L18.6 8.6 10.01 17z"/></svg>
   </div>
   <div style="position:absolute;left:393px;top:710px;width:15px;height:15px;overflow:hidden;">
-    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="#2c9626" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm-1.99 15L5 12l1.41-1.41 3.6 3.59 7.19-7.19L18.6 8.6 10.01 17z"/></svg>
   </div>
   <div style="position:absolute;left:393px;top:1035px;width:15px;height:15px;overflow:hidden;">
-    <img src="https://www.figma.com/api/mcp/asset/351c557c-ddea-4ed7-b753-638012f22482" style="width:100%;height:100%;" alt="ok">
+    <svg width="100%" height="100%" viewBox="0 0 24 24" fill="#2c9626" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm-1.99 15L5 12l1.41-1.41 3.6 3.59 7.19-7.19L18.6 8.6 10.01 17z"/></svg>
   </div>
 
   <!-- ── VoicePanel ── -->
@@ -451,7 +460,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
     <!-- Waveform bar -->
     <div id="vp-waveform" style="position:absolute;top:122px;left:14px;width:189px;height:38px;background:#fff;border:1px solid #2c9626;border-radius:20px;overflow:hidden;">
       <div id="vp-wave-icon" style="position:absolute;left:9px;top:5px;width:24px;height:24px;opacity:1;">
-        <img src="https://www.figma.com/api/mcp/asset/ac581b8d-e56f-434c-8bfb-ffe61f98cff9" style="width:24px;height:24px;" alt="voz">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#79747e" xmlns="http://www.w3.org/2000/svg"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5-3c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
       </div>
       <span id="wave-label" style="position:absolute;left:43px;top:11px;font-size:12px;font-weight:600;color:#c4c7d1;white-space:nowrap;">Ouvindo…</span>
       <!-- Wave bars (absolute, matching Figma node 183:159) -->
@@ -549,10 +558,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;min-width:1440px}
     <div style="position:absolute;top:0;left:0;width:334px;height:37px;background:#2c9626;border-radius:8px 8px 0 0;">
       <!-- Cash-coin icon — 4 vetores compostos (231:256) -->
       <div style="position:absolute;left:10px;top:10px;width:16px;height:16px;overflow:hidden;">
-        <img src="https://www.figma.com/api/mcp/asset/5ff2fe5f-37f5-4cba-9a96-45bb28a98918" style="position:absolute;top:0;left:0;right:0;bottom:37.5%;width:100%;height:62.5%;object-fit:fill;" alt="">
-        <img src="https://www.figma.com/api/mcp/asset/e9ca4fcb-10bd-4a11-9a2f-251509826790" style="position:absolute;top:37.5%;left:37.5%;right:0;bottom:0;width:62.5%;height:62.5%;object-fit:fill;" alt="">
-        <img src="https://www.figma.com/api/mcp/asset/0eeabd9e-87d0-45a8-9aab-741affd34334" style="position:absolute;top:18.76%;left:37.5%;right:37.5%;bottom:58.44%;width:25%;height:22.8%;object-fit:fill;" alt="">
-        <img src="https://www.figma.com/api/mcp/asset/9e71351a-b7f2-4fd5-9244-9b9b6dd46b86" style="position:absolute;top:53.13%;left:58.98%;right:21.49%;bottom:15.63%;width:19.53%;height:31.24%;object-fit:fill;" alt="">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm.75 15.5h-1.5v-1.14c-1.36-.29-2.4-1.12-2.47-2.59h1.67c.06.78.6 1.34 1.8 1.34 1.29 0 1.8-.65 1.8-1.24 0-.81-.7-1.11-2.02-1.44-1.6-.4-3.1-.95-3.1-2.77 0-1.34 1.08-2.24 2.32-2.5V5.5h1.5v1.16c1.34.31 2.14 1.23 2.19 2.5h-1.66c-.04-.72-.5-1.28-1.53-1.28-.98 0-1.57.44-1.57 1.08 0 .58.42.86 1.86 1.23 1.7.44 3.26.99 3.26 2.94 0 1.42-1.06 2.34-2.35 2.6v1.27z"/></svg>
       </div>
       <p style="position:absolute;left:33px;top:11.5px;font-size:11px;font-weight:500;color:#fff;white-space:nowrap;">Impostômetro</p>
     </div>
